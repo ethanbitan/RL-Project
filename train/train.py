@@ -3,6 +3,7 @@ from agents.base_agent import Base_Agent
 from agents.mab_agent import MAB_Agent
 from agents.mc_agent import MC_Agent
 from agents.sarsa_agent import SARSA_Agent
+from agents.dqn_agent import DQN_Agent
 
 def train_agent(agent: Base_Agent, env: Environment, episodes: int = 1, verbose: bool = False):
     all_rewards = []
@@ -39,7 +40,20 @@ def train_agent(agent: Base_Agent, env: Environment, episodes: int = 1, verbose:
                 state, action, action_id = next_state, next_action, next_action_id
                 total_reward += reward
 
+        elif isinstance(agent, DQN_Agent):
+            while not done:
+                action, action_id = agent.act(state)
+                next_state, reward, done, _ = env.step(action)
+                agent.remember(state, action_id, reward, next_state, done)
+                agent.update()  # entraînement pas à pas
+                state = next_state
+                total_reward += reward
+
+        else:
+            raise NotImplementedError("Agent type not supported.")
+
         all_rewards.append(total_reward)
         if verbose:
             print(f"🎯 Épisode {ep + 1}/{episodes} — Total reward: {total_reward:.2f}")
+
     return all_rewards
