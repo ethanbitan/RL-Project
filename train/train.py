@@ -1,5 +1,8 @@
 from environment.environment import Environment
 from agents.base_agent import Base_Agent
+from agents.mab_agent import MAB_Agent
+from agents.mc_agent import MC_Agent
+from agents.sarsa_agent import SARSA_Agent
 
 def train_agent(agent: Base_Agent, env: Environment, episodes: int = 1, verbose: bool = False):
     all_rewards = []
@@ -10,23 +13,33 @@ def train_agent(agent: Base_Agent, env: Environment, episodes: int = 1, verbose:
         done = False
         total_reward = 0
 
-        while not done:
-            action, action_id = agent.act(state)
-            next_state, reward, done, _ = env.step(action)
-            
-            if hasattr(agent, "remember"):
-                agent.remember(state, action_id, reward)
-            else:
+        if isinstance(agent, MAB_Agent):
+            while not done:
+                action, action_id = agent.act(state)
+                next_state, reward, done, _ = env.step(action)
                 agent.update(action_id, reward)
-            
-            state = next_state
-            total_reward += reward
+                state = next_state
+                total_reward += reward
 
-        if hasattr(agent, "update") and hasattr(agent, "remember"):
+        elif isinstance(agent, MC_Agent):
+            while not done:
+                action, action_id = agent.act(state)
+                next_state, reward, done, _ = env.step(action)
+                agent.remember(state, action_id, reward)
+                state = next_state
+                total_reward += reward
             agent.update()
+
+        elif isinstance(agent, SARSA_Agent):
+            action, action_id = agent.act(state)
+            while not done:
+                next_state, reward, done, _ = env.step(action)
+                next_action, next_action_id = agent.act(next_state)
+                agent.update(state, action_id, reward, next_state, next_action_id)
+                state, action, action_id = next_state, next_action, next_action_id
+                total_reward += reward
 
         all_rewards.append(total_reward)
         if verbose:
             print(f"🎯 Épisode {ep + 1}/{episodes} — Total reward: {total_reward:.2f}")
-
     return all_rewards
