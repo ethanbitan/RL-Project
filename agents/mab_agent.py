@@ -6,12 +6,11 @@ class MAB_Agent(Base_Agent):
     def __init__(self, env: Environment, epsilon: float = 0.1):
         self.epsilon = epsilon
         self.tickers = env.tickers
-        self.n_arms = len(self.tickers)
 
-        buy_actions = np.eye(self.n_arms, dtype=np.float32)
-        sell_action = -np.ones((1, self.n_arms), dtype=np.float32)
-        hold_action = np.zeros((1, self.n_arms), dtype=np.float32)
-        self.action_templates = np.vstack([buy_actions, sell_action, hold_action])
+        buy_actions = np.eye(len(self.tickers))
+        sell_action = -np.ones((1, len(self.tickers)))
+        hold_action = np.zeros((1, len(self.tickers)))
+        self.action_templates = np.vstack([buy_actions, sell_action, hold_action]).astype(np.float32)
 
         self.Q = np.zeros(len(self.action_templates))
         self.N = np.zeros(len(self.action_templates))

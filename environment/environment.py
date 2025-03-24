@@ -47,11 +47,13 @@ class Environment(gym.Env):
         
         self.done = False
 
-        print(f"\n📈 Step: {self.current_step}")
-        print(f"🟦 Prices: {[round(self.current_prices[t], 2) for t in self.tickers]}")
-        print(f"💰 Balance: {self.current_balance:.2f}")
-        print(f"📊 Shares: { {t: round(self.current_shares[t], 2) for t in self.tickers} }")
-        print(f"📦 Value: {self.current_value:.2f}")
+        if self.verbose:
+            print(f"\n📈 Step: {self.current_step}")
+            print(f"🟦 Prices: {[round(self.current_prices[t], 2) for t in self.tickers]}")
+            print(f"💰 Balance: {self.current_balance:.2f}")
+            print(f"📊 Shares: { {t: round(self.current_shares[t], 2) for t in self.tickers} }")
+            print(f"📦 Value: {self.current_value:.2f}")
+            
         return self._get_state()
     
     def render(self):
@@ -109,7 +111,7 @@ class Environment(gym.Env):
             print(f"💰 Balance: {self.current_balance:.2f}")
             print(f"📊 Shares: { {t: round(self.current_shares[t], 2) for t in self.tickers} }")
             print(f"📦 Value: {self.current_value:.2f}")
-            print(f"🔄 Reward: {reward:.2f} (Δ from {previous_value:.2f})")
+            print(f"🔄 Reward: {reward:.2f}")
             print(f"🎯 Action taken: {np.round(action, 2)}")
 
         return self._get_state(), reward, self.done, {}

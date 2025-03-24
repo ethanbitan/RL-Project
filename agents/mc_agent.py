@@ -7,35 +7,37 @@ class MC_Agent(Base_Agent):
         self.epsilon = epsilon
         self.gamma = gamma
         self.tickers = env.tickers
-        self.n_actions = len(self.tickers) + 2  # buy one asset + sell all + hold
-        self.action_templates = np.vstack([
-            np.eye(len(self.tickers)),
-            -np.ones((1, len(self.tickers))),
-            np.zeros((1, len(self.tickers)))
-        ]).astype(np.float32)
+        self.window_size = env.window_size
+
+        buy_actions = np.eye(len(self.tickers))
+        sell_action = -np.ones((1, len(self.tickers)))
+        hold_action = np.zeros((1, len(self.tickers)))
+        self.action_templates = np.vstack([buy_actions, sell_action, hold_action]).astype(np.float32)
 
         self.Q = {}           # (state, action_id) → Q-value
         self.returns = {}     # (state, action_id) → list of returns
         self.trajectory = []  # list of (state, action_id, reward)
 
-    def _state_to_key(self, state):
-        # Convertit un état complexe en clé hashable (tuple)
-        # Ici on simplifie en flattenant tous les éléments en un seul vecteur
-        prices, balance, shares, value = state
-        flat = []
-        for d in prices + balance + shares + value:
-            if isinstance(d, dict):
-                flat.extend(list(d.values()))
-            else:
-                flat.extend(d if isinstance(d, list) else [d])
-        return tuple(np.round(flat, 2))  # On arrondit pour limiter les variations
+    def reset(self):
+        self.trajectory = []
 
+    def _state_to_key(self, state):
+        prices, balance, shares, _ = state
+        prices_diff_key = tuple(
+            tuple(round(prices[i+1][t] - prices[i][t], 0) for t in self.tickers)
+            for i in range(len(prices) - 1)
+        )
+        balance_key = (balance[-1] > 0,)
+        shares_key = tuple(shares[-1][t] > 0 for t in self.tickers)
+        print(prices_diff_key + balance_key + shares_key)
+        return prices_diff_key + balance_key + shares_key
+    
     def act(self, state):
         state_key = self._state_to_key(state)
         if np.random.rand() < self.epsilon:
-            action_id = np.random.randint(self.n_actions)
+            action_id = np.random.randint(len(self.action_templates))
         else:
-            q_vals = [self.Q.get((state_key, a), 0.0) for a in range(self.n_actions)]
+            q_vals = [self.Q.get((state_key, a), 0.0) for a in range(len(self.action_templates))]
             action_id = np.argmax(q_vals)
         return self.action_templates[action_id], action_id
 
@@ -62,6 +64,3 @@ class MC_Agent(Base_Agent):
     def remember(self, state, action_id, reward):
         state_key = self._state_to_key(state)
         self.trajectory.append((state_key, action_id, reward))
-
-    def reset(self):
-        self.trajectory = []
