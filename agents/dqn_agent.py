@@ -21,6 +21,7 @@ class DQN_Agent(Base_Agent):
         buffer_size: int = 100_000,
         target_update_freq: int = 100
     ):
+        
         self.env = env
         self.state_dim = env.observation_space.shape[0]
         self.n_actions = len(env.tickers) + 2  # buy each, sell all, hold
