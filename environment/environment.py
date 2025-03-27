@@ -4,47 +4,45 @@ from gym import spaces
 
 class Environment(gym.Env):
     def __init__(self, data: dict, window_size: int, initial_balance: float, verbose: bool = False):
-        self.current_step = 0
+        self.window_size = window_size
+        self.current_step = self.window_size
         self.history_prices = data
         self.current_prices = self.history_prices[self.current_step]
-        self.max_steps = len(self.history_prices) - 1
+        self.max_steps = len(self.history_prices) - 1 - self.window_size
         self.tickers = list(self.history_prices[0].keys())
-        self.window_size = window_size
 
         self.initial_balance = initial_balance
-        self.history_balance = {0: self.initial_balance}
-        self.current_balance = self.history_balance[self.current_step]
-
-        self.initial_shares = {t: 0 for t in self.tickers}
-        self.history_shares = {0: self.initial_shares}
-        self.current_shares = self.history_shares[self.current_step]
-
         self.initial_value = self.initial_balance
-        self.history_value = {0: self.initial_value}
-        self.current_value = self.history_value[self.current_step]
+        self.initial_shares = {t: 0 for t in self.tickers}
 
-        self.action_space = spaces.Box(low = -1.0, high = 1.0, shape = (len(self.tickers),))
-        self.observation_dimension = self.window_size * (2 * len(self.tickers) + 2)  #window * (prices (n) + current_shares (n) + current_balance (1) + current_value (1) )
-        self.observation_space = spaces.Box(low = -np.inf, high = np.inf, shape = (self.observation_dimension,))
+        # Historiques initialisés avec les valeurs fixes pour les premiers steps
+        self.history_balance = {i: self.initial_balance for i in range(self.current_step + 1)}
+        self.history_shares = {i: self.initial_shares.copy() for i in range(self.current_step + 1)}
+        self.history_value = {i: self.initial_value for i in range(self.current_step + 1)}
+
+        self.current_balance = self.initial_balance
+        self.current_shares = self.initial_shares.copy()
+        self.current_value = self.initial_value
+
+        self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(len(self.tickers),))
+        self.observation_dimension = self.window_size * (2 * len(self.tickers) + 2)
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(self.observation_dimension,))
 
         self.done = False
-
         self.verbose = verbose
 
     def reset(self):
-        self.current_step = 0
+        self.current_step = self.window_size
         self.current_prices = self.history_prices[self.current_step]
 
-        self.history_balance = {0: self.initial_balance}
+        self.history_balance = {i: self.initial_balance for i in range(self.current_step + 1)}
+        self.history_shares = {i: {t: 0 for t in self.tickers} for i in range(self.current_step + 1)}
+        self.history_value = {i: self.initial_balance for i in range(self.current_step + 1)}
+
         self.current_balance = self.initial_balance
-
-        self.history_shares = {0: self.initial_shares}
         self.current_shares = {t: 0 for t in self.tickers}
+        self.current_value = self.initial_balance
 
-        self.initial_value = self.initial_balance
-        self.history_value = {0: self.initial_value}
-        self.current_value = self.initial_value
-        
         self.done = False
 
         if self.verbose:
@@ -53,20 +51,19 @@ class Environment(gym.Env):
             print(f"💰 Balance: {self.current_balance:.2f}")
             print(f"📊 Shares: { {t: round(self.current_shares[t], 2) for t in self.tickers} }")
             print(f"📦 Value: {self.current_value:.2f}")
-            
+
         return self._get_state()
-    
-    def render(self):
-        return self.history_balance, self.history_shares, self.history_value
     
     def _get_state(self):
         start = max(0, self.current_step - self.window_size)
-        end = self.current_step + 1
-        prices_window = [self.history_prices[i] for i in range(start, end)]
-        balance_window = [self.history_balance[i] for i in range(start, end)]
-        shares_window = [self.history_shares[i] for i in range(start, end)]
-        value_window = [self.history_value[i] for i in range(start, end)]
-        return prices_window, balance_window, shares_window, value_window
+        end = self.current_step
+
+        window_prices = [self.history_prices[i] for i in range(start, end)]
+        window_balance = [self.history_balance[i] for i in range(start, end)]
+        window_shares = [self.history_shares[i] for i in range(start, end)]
+        window_value = [self.history_value[i] for i in range(start, end)]
+
+        return window_prices, window_balance, window_shares, window_value
         
     def step(self, action: np.ndarray):
         if self.done:
