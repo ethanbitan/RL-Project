@@ -5,8 +5,9 @@ from agents.mc_agent import MC_Agent
 from agents.sarsa_agent import SARSA_Agent
 from agents.dqn_agent import DQN_Agent
 
-def train_agent(agent: Base_Agent, env: Environment, episodes: int = 1, verbose: bool = False):
+def train_agent(agent: Base_Agent, env: Environment, episodes: int = 1, train: bool = True, verbose: bool = False):
     all_rewards = []
+    env.train_mode = train
 
     for ep in range(episodes):
         state = env.reset()
@@ -45,7 +46,7 @@ def train_agent(agent: Base_Agent, env: Environment, episodes: int = 1, verbose:
                 action, action_id = agent.act(state)
                 next_state, reward, done, _ = env.step(action)
                 agent.remember(state, action_id, reward, next_state, done)
-                agent.update()  # entraînement pas à pas
+                agent.update()
                 state = next_state
                 total_reward += reward
 
@@ -54,6 +55,7 @@ def train_agent(agent: Base_Agent, env: Environment, episodes: int = 1, verbose:
 
         all_rewards.append(total_reward)
         if verbose:
-            print(f"🎯 Épisode {ep + 1}/{episodes} — Total reward: {total_reward:.2f}")
+            phase = "Training" if train else "Testing"
+            print(f"{phase} | Épisode {ep + 1}/{episodes} — Total reward: {total_reward:.2f}")
 
     return all_rewards

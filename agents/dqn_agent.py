@@ -19,7 +19,8 @@ class DQN_Agent(Base_VectorizedAgent):
         alpha: float = 1e-3,
         batch_size: int = 64,
         buffer_size: int = 100_000,
-        target_update_freq: int = 100
+        target_update_freq: int = 100,
+        device: str = "cpu",
     ):
         super().__init__(env)
         
@@ -39,7 +40,7 @@ class DQN_Agent(Base_VectorizedAgent):
         self.step_counter = 0
 
         # NN setup
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "mps")
+        self.device = device
         print(f"Device: {self.device}")
         self.q_net = QNetwork(self.state_dim, self.n_actions).to(self.device)
         self.target_q_net = QNetwork(self.state_dim, self.n_actions).to(self.device)

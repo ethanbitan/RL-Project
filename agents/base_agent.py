@@ -14,5 +14,5 @@ class Base_Agent(ABC):
     def update(self, *args):
         pass
 
-    def train(self):
+    def train(self, mode: bool = True):
         pass

@@ -3,8 +3,8 @@ from environment.environment import Environment
 from agents.base_agent import Base_Agent
 
 class MAB_Agent(Base_Agent):
-    def __init__(self, env: Environment, epsilon: float = 0.1):
-        self.epsilon = epsilon
+    def __init__(self, env: Environment, epsilon: float = 0.1, mode: bool = True):
+        self.epsilon = epsilon if mode else 0.0
         self.tickers = env.tickers
 
         buy_actions = np.eye(len(self.tickers))
