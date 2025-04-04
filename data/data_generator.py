@@ -14,4 +14,4 @@ data.rename(columns={"Date": "date"}, inplace=True)
 
 print(data.head())
 
-data.to_csv("nasdaq_stock_prices.csv", index=False)
+data.to_csv("nasdaq_stock_prices_bis.csv", index=False)

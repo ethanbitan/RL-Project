@@ -5,7 +5,7 @@ from agents.mc_agent import MC_Agent
 from agents.sarsa_agent import SARSA_Agent
 from agents.dqn_agent import DQN_Agent
 
-def train_agent(agent: Base_Agent, env: Environment, episodes: int = 1, train: bool = True, verbose: bool = False):
+def train_and_eval_agent(agent: Base_Agent, env: Environment, episodes: int = 1, train: bool = True, verbose: bool = False):
     all_rewards = []
     env.train_mode = train
 
